@@ -1,21 +1,21 @@
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: "Helvetica", cursive;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Helvetica', cursive;
 }
 body {
-  overflow: hidden;
+    overflow: hidden;
 }
 canvas {
-  /* background: blue; */
-  top: 0;
-  left: 0;
+    /* background: blue; */
+    top: 0;
+    left: 0;
 }
 img {
-  display: none;
+    display: none;
 }
-#loading{
+#loading {
     position: absolute;
     top: 50%;
     width: 100%;

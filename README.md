@@ -6,23 +6,23 @@ This README serves as a quick reference for setting up a new project environment
 
 1. **Install Node.js**: Make sure you have Node.js installed.
 
-   - Use Node Version Manager (nvm) to install the latest version of Node.js:
+    - Use Node Version Manager (nvm) to install the latest version of Node.js:
 
-     ```bash
-     nvm install node
-     ```
+        ```bash
+        nvm install node
+        ```
 
-     This will install the latest version of Node.js. If you don't have `nvm` installed, follow the installation instructions [here](https://github.com/nvm-sh/nvm#installing-and-updating).
+        This will install the latest version of Node.js. If you don't have `nvm` installed, follow the installation instructions [here](https://github.com/nvm-sh/nvm#installing-and-updating).
 
-   - Check version: `node -v` and `npm -v`
+    - Check version: `node -v` and `npm -v`
 
 2. **Initialize npm**: Run the following command to set up `package.json`:
 
-   ```bash
-   npm init -y
-   ```
+    ```bash
+    npm init -y
+    ```
 
-   The `-y` flag accepts all default options. You can edit `package.json` later to customize as needed.
+    The `-y` flag accepts all default options. You can edit `package.json` later to customize as needed.
 
 ## 2. Install Development Tools
 
@@ -30,27 +30,27 @@ This README serves as a quick reference for setting up a new project environment
 
 1. **Install ESLint and Prettier** as dev dependencies:
 
-   ```bash
-   npm install --save-dev eslint prettier
-   ```
+    ```bash
+    npm install --save-dev eslint prettier
+    ```
 
 2. **Configure ESLint**:
 
-   - Run ESLint initialization:
-     ```bash
-     npx eslint --init
-     ```
-     Choose your options as appropriate for the project.
+    - Run ESLint initialization:
+        ```bash
+        npx eslint --init
+        ```
+        Choose your options as appropriate for the project.
 
 3. **Configure Prettier**:
 
-   - Create `.prettierrc` and add the following configuration:
-     ```json
-     {
-       "tabWidth": 4,
-       "singleQuote": true
-     }
-     ```
+    - Create `.prettierrc` and add the following configuration:
+        ```json
+        {
+            "tabWidth": 4,
+            "singleQuote": true
+        }
+        ```
 
 ## 3. Add npm Scripts
 
@@ -63,8 +63,8 @@ In your `package.json`, add useful scripts for development:
 }
 ```
 
-- **lint**: Lints your JavaScript files.
-- **format**: Formats your code using Prettier.
+-   **lint**: Lints your JavaScript files.
+-   **format**: Formats your code using Prettier.
 
 ## 4. Git Setup
 
@@ -75,14 +75,15 @@ Since you will be creating the Git repository on GitHub and cloning it to your l
 To verify everything is working:
 
 1. **Run ESLint**:
-   ```bash
-   npm run lint
-   ```
+
+    ```bash
+    npm run lint
+    ```
 
 2. **Run Prettier**:
-   ```bash
-   npm run format
-   ```
+    ```bash
+    npm run format
+    ```
 
 ## Summary
 
@@ -91,12 +92,12 @@ This setup helps maintain a consistent environment across projects and includes 
 ### Files Created During Setup
 
 1. **Files Created Manually**:
-   - `.prettierrc`: For Prettier configuration.
-   - `.gitignore`: To ignore specific files and directories.
+
+    - `.prettierrc`: For Prettier configuration.
+    - `.gitignore`: To ignore specific files and directories.
 
 2. **Files Created Automatically**:
-   - `package.json`: Created when you run `npm init`.
-   - `node_modules/`: Created when you install packages with npm.
+    - `package.json`: Created when you run `npm init`.
+    - `node_modules/`: Created when you install packages with npm.
 
 Feel free to update this guide as your tools and workflows evolve. It can also be customized per project depending on specific needs.
-
