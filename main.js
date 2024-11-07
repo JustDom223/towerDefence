@@ -1,4 +1,6 @@
 // Get the canvas and context
+import Enemy from './enemy.js';
+
 const canvas = document.getElementById('gameCanvas');
 const context = canvas.getContext('2d');
 
@@ -30,81 +32,6 @@ let lives = 5;
 let score = 0;
 let gold = 20; // Starting gold
 let gameOverFlag = false;
-
-// Enemy class
-class Enemy {
-    constructor() {
-        this.width = 20;
-        this.height = 20;
-        this.health = 100;
-        this.maxHealth = 100;
-        this.speed = 1;
-        this.position = { x: path[0].x, y: path[0].y };
-        this.waypointIndex = 0;
-    }
-
-    update() {
-        if (this.waypointIndex < path.length - 1) {
-            const targetX = path[this.waypointIndex + 1].x;
-            const targetY = path[this.waypointIndex + 1].y;
-            const dx = targetX - this.position.x;
-            const dy = targetY - this.position.y;
-            const distance = Math.hypot(dx, dy);
-
-            if (distance < this.speed) {
-                this.position.x = targetX;
-                this.position.y = targetY;
-                this.waypointIndex++;
-            } else {
-                this.position.x += (dx / distance) * this.speed;
-                this.position.y += (dy / distance) * this.speed;
-            }
-        } else {
-            // Enemy reached the end
-            lives--;
-            removeEnemy(this);
-            if (lives <= 0) {
-                gameOverFlag = true;
-            }
-        }
-    }
-
-    render() {
-        // Draw enemy rectangle
-        context.fillStyle = 'red';
-        context.fillRect(
-            this.position.x - this.width / 2,
-            this.position.y - this.height / 2,
-            this.width,
-            this.height
-        );
-        // Add black border around enemy
-        context.strokeStyle = 'black';
-        context.lineWidth = 1;
-        context.strokeRect(
-            this.position.x - this.width / 2,
-            this.position.y - this.height / 2,
-            this.width,
-            this.height
-        );
-
-        // Health bar
-        context.fillStyle = 'black';
-        context.fillRect(
-            this.position.x - this.width / 2,
-            this.position.y - this.height / 2 - 10,
-            this.width,
-            5
-        );
-        context.fillStyle = 'green';
-        context.fillRect(
-            this.position.x - this.width / 2,
-            this.position.y - this.height / 2 - 10,
-            this.width * (this.health / this.maxHealth),
-            5
-        );
-    }
-}
 
 // Tower class
 class Tower {
@@ -212,7 +139,7 @@ function removeProjectile(projectile) {
 
 function spawnEnemies() {
     if (spawnTimer <= 0) {
-        enemies.push(new Enemy());
+        enemies.push(new Enemy(path));
         spawnTimer = 120; // Spawn every 120 frames
     } else {
         spawnTimer--;
@@ -225,7 +152,8 @@ function drawPath() {
     context.lineCap = 'round'; // Smooth edges
     context.beginPath();
     context.moveTo(path[0].x, path[0].y);
-    for (let i = 1; i < path.length; i++) {
+    for (let i = 1; i < path.length; i++)
+    {
         context.lineTo(path[i].x, path[i].y);
     }
     context.stroke();
@@ -267,7 +195,7 @@ function render() {
     }
 
     for (let enemy of enemies) {
-        enemy.render();
+        enemy.render(context);
     }
 
     for (let projectile of projectiles) {
