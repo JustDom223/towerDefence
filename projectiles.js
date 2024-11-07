@@ -1,20 +1,15 @@
 // projectiles.js
 
 export default class Projectile {
-    constructor(x, y, target, damage, context, removeProjectile, removeEnemy, increaseScore, increaseGold) {
+    constructor(x, y, target, damage, context) {
         this.x = x;
         this.y = y;
         this.target = target;
         this.damage = damage;
         this.speed = 5;
-        this.radius = 3; // Size of the projectile
+        this.radius = 3;
         this.context = context;
-
-        // Functions for managing game state
-        this.removeProjectile = removeProjectile;
-        this.removeEnemy = removeEnemy;
-        this.increaseScore = increaseScore;
-        this.increaseGold = increaseGold;
+        this.isExpired = false; // Flag to indicate if the projectile should be removed
     }
 
     update() {
@@ -25,13 +20,11 @@ export default class Projectile {
         if (distance < this.speed) {
             // Projectile has reached the enemy
             this.target.health -= this.damage;
-            this.removeProjectile(this);
+            this.isExpired = true; // Mark for removal
 
-            // Remove enemy if health is below zero
+            // If the enemy's health is below zero, mark it for removal
             if (this.target.health <= 0) {
-                this.increaseScore(10);
-                this.increaseGold(1); // Gain 1 gold for defeating an enemy
-                this.removeEnemy(this.target);
+                this.target.isDefeated = true; // We'll handle this flag in the game loop
             }
         } else {
             // Move projectile towards the enemy
@@ -41,7 +34,6 @@ export default class Projectile {
     }
 
     render() {
-        // Draw projectile as a small circle
         this.context.beginPath();
         this.context.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         this.context.fillStyle = "black";

@@ -3,7 +3,7 @@
 import Projectile from './projectiles.js';
 
 export default class Tower {
-    constructor(x, y, context, enemies, removeProjectile, removeEnemy, increaseScore, increaseGold) {
+    constructor(x, y, context, enemies, removeProjectile, removeEnemy) {
         this.x = x;
         this.y = y;
         this.range = 100;
@@ -11,13 +11,11 @@ export default class Tower {
         this.fireTimer = 0;
         this.context = context;
         this.enemies = enemies;
-        this.damage = 20
+        this.damage = 20;
 
         // Functions for managing game state
         this.removeProjectile = removeProjectile;
         this.removeEnemy = removeEnemy;
-        this.increaseScore = increaseScore;
-        this.increaseGold = increaseGold;
 
         // Projectiles will be managed globally
     }
@@ -40,12 +38,10 @@ export default class Tower {
                     this.x,
                     this.y,
                     nearestEnemy,
-                    this.damage, // Damage
+                    this.damage,
                     this.context,
                     this.removeProjectile,
-                    this.removeEnemy,
-                    this.increaseScore,
-                    this.increaseGold
+                    this.removeEnemy
                 ));
                 this.fireTimer = this.fireRate;
             }
