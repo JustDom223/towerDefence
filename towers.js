@@ -11,6 +11,7 @@ export default class Tower {
         this.fireTimer = 0;
         this.context = context;
         this.enemies = enemies;
+        this.damage = 20
 
         // Functions for managing game state
         this.removeProjectile = removeProjectile;
@@ -39,7 +40,7 @@ export default class Tower {
                     this.x,
                     this.y,
                     nearestEnemy,
-                    10, // Damage
+                    this.damage, // Damage
                     this.context,
                     this.removeProjectile,
                     this.removeEnemy,

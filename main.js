@@ -33,7 +33,7 @@ const projectiles = []; // Array to store projectiles
 let spawnTimer = 0;
 let lives = 5;
 let score = 0;
-let gold = 26; // Starting gold
+let gold = 28; // Starting gold
 let gameOverFlag = false;
 
 // Utility functions
@@ -201,6 +201,7 @@ canvas.addEventListener('click', function(event) {
                 increaseScore,
                 increaseGold
             ));
+            // console.log(towers)
             gold -= 10; // Deduct 10 gold for placing a tower
         } else {
             // Not enough gold to place a tower
