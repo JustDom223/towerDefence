@@ -1,16 +1,17 @@
-*{
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-body, html {
+body,
+html {
     margin: 0;
     padding: 0;
     overflow: hidden;
     touch-action: none;
 }
-#gameCanvas{
+#gameCanvas {
     max-width: 100%;
     max-height: 100%;
 }

@@ -1,6 +1,5 @@
-// towers.js
-
 import Projectile from './projectiles.js';
+import { TOWER_SIZE } from './gameConfig.js';
 
 export default class Tower {
     constructor(x, y, context, enemies, removeProjectile, removeEnemy) {
@@ -34,15 +33,17 @@ export default class Tower {
                 }
             }
             if (nearestEnemy) {
-                projectiles.push(new Projectile(
-                    this.x,
-                    this.y,
-                    nearestEnemy,
-                    this.damage,
-                    this.context,
-                    this.removeProjectile,
-                    this.removeEnemy
-                ));
+                projectiles.push(
+                    new Projectile(
+                        this.x,
+                        this.y,
+                        nearestEnemy,
+                        this.damage,
+                        this.context,
+                        this.removeProjectile,
+                        this.removeEnemy,
+                    ),
+                );
                 this.fireTimer = this.fireRate;
             }
         } else {
@@ -52,6 +53,11 @@ export default class Tower {
 
     render() {
         this.context.fillStyle = 'blue';
-        this.context.fillRect(this.x - 10, this.y - 10, 20, 20);
+        this.context.fillRect(
+            this.x - TOWER_SIZE / 2,
+            this.y - TOWER_SIZE / 2,
+            TOWER_SIZE,
+            TOWER_SIZE,
+        );
     }
 }
