@@ -1,8 +1,14 @@
 // main.js
 
 // ------------------- Import Necessary Modules -------------------
-import { BasicEnemy, FastEnemy, TankEnemy } from './gameModules/enemies.js'; // Adjust the path as necessary
-import Tower from './gameModules/towers.js'; // Import your Tower class
+import {
+    BasicEnemy,
+    FastEnemy,
+    TankEnemy,
+    // ShieldEnemy,
+    // BossEnemy, // Ensure BossEnemy is imported if used in waves
+} from './gameModules/enemies.js';
+import Tower from './gameModules/towers.js';
 import {
     PATH_WIDTH,
     TOWER_SIZE,
@@ -10,117 +16,114 @@ import {
     INITIAL_LIVES,
     INITIAL_SCORE,
     MAPS,
-} from './gameModules/gameConfig.js'; // Import your game configuration constants
-import { waves } from './gameModules/waves.js'; // Import your waves configuration
-import { initControls, getPreview } from './gameModules/controls.js'; // Import your controls module
+} from './gameModules/gameConfig.js';
+import { waves } from './gameModules/waves.js';
+import { initControls, getPreview } from './gameModules/controls.js';
 
 // ------------------- Canvas Setup -------------------
 
-// Get the canvas and context
 const canvas = document.getElementById('gameCanvas');
 const context = canvas.getContext('2d');
 
-// Function to set canvas size based on the window size
 function setCanvasSize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 }
 
-// Initial canvas size
 setCanvasSize();
 
-// Handle window resize
 window.addEventListener('resize', () => {
     setCanvasSize();
-    // Rescale paths if necessary
     path = scalePath(MAPS[selectedMapIndex]);
 });
 
 // ------------------- Game Variables -------------------
 
-// Select a random map from MAPS
-const selectedMapIndex = Math.floor(Math.random() * MAPS.length);
-const rawPath = MAPS[selectedMapIndex];
-let path = scalePath(rawPath); // Scale the path based on canvas size
-
-// Initialize game entities
-const enemies = [];
-const towers = [];
-const projectiles = [];
-let lives = INITIAL_LIVES;
+// Define gold as a constant object to maintain reference
+const gold = { value: INITIAL_GOLD };
 let score = INITIAL_SCORE;
-let gold = { value: INITIAL_GOLD }; // Using an object for mutability
-let gameOverFlag = false;
 
-// Wave management variables
-let currentWaveIndex = 0;
-let enemiesSpawnedInWave = 0;
-let waveSpawnTimer = 0;
-let waveInProgress = false;
-let waveDelayTimer = 200; // Frames to wait before starting the next wave
+// Other game state variables
+let selectedMapIndex;
+let rawPath;
+let path;
+
+let enemies;
+let towers;
+let projectiles;
+let lives;
+let gameOverFlag;
+let gameWonFlag;
+
+let currentWaveIndex;
+let waveInProgress;
+let waveDelayTimer;
+let currentWaveSpawnGroups;
+
+let lastFrameTime;
+
+// Variables for Wave Messages
+let waveMessage = ''; // Current wave message ('Wave Start', 'Wave Complete')
+let waveMessageTimer = 0; // Timer for the wave message display duration
+
+// Initialize game state
+function initializeGame() {
+    selectedMapIndex = Math.floor(Math.random() * MAPS.length);
+    rawPath = MAPS[selectedMapIndex];
+    path = scalePath(rawPath);
+
+    enemies = [];
+    towers = [];
+    projectiles = [];
+    lives = INITIAL_LIVES;
+    score = INITIAL_SCORE;
+    gold.value = INITIAL_GOLD; // Reset gold without reassigning
+    gameOverFlag = false;
+    gameWonFlag = false;
+
+    currentWaveIndex = 0;
+    waveInProgress = false;
+    waveDelayTimer = 2000; // 2 seconds delay between waves
+    currentWaveSpawnGroups = [];
+
+    lastFrameTime = Date.now();
+
+    // Reset wave messages
+    waveMessage = '';
+    waveMessageTimer = 0;
+}
+
+// Call initializeGame to set the initial state
+initializeGame();
 
 // ------------------- Helper Functions -------------------
 
-/**
- * Scales the path points based on the current canvas size.
- * If your MAPS are defined with relative coordinates, implement scaling here.
- * Currently assuming absolute coordinates.
- * @param {Array} path - The path with absolute coordinates.
- * @returns {Array} The scaled path.
- */
 function scalePath(path) {
-    // If MAPS are defined with relative coordinates (percentages), implement scaling here.
-    // Currently assuming absolute coordinates.
     return path.map((point) => ({ x: point.x, y: point.y }));
 }
 
-/**
- * Generates a random perpendicular offset within the path's width for enemy spawning.
- * Ensures that enemies spawn within the path boundaries without overlapping.
- * @param {Array} path - The array of points defining the path.
- * @param {number} enemySize - The size (width/height) of the enemy.
- * @returns {Object} The spawn offset { x, y }.
- */
 function generateRandomSpawnOffset(path, enemySize) {
-    // Calculate the direction vector of the first segment
     const dx = path[1].x - path[0].x;
     const dy = path[1].y - path[0].y;
     const distance = Math.hypot(dx, dy);
     const perpendicularX = -dy / distance;
     const perpendicularY = dx / distance;
 
-    // Define the maximum offset based on PATH_WIDTH and enemy size
     const halfPathWidth = PATH_WIDTH / 2;
     const maxOffset = halfPathWidth - enemySize / 2;
     const minOffset = -maxOffset;
 
-    // Generate a random offset within [minOffset, maxOffset]
     const spawnOffsetMagnitude =
         Math.random() * (maxOffset - minOffset) + minOffset;
-
-    // Determine spawnOffset direction based on spawnOffsetMagnitude
     const spawnOffsetDirection = spawnOffsetMagnitude >= 0 ? 1 : -1;
-
-    // Absolute magnitude for consistent offset regardless of direction
     const absoluteOffset = Math.abs(spawnOffsetMagnitude);
 
-    // Multiply by the perpendicular vector to get the offset components
     return {
         x: absoluteOffset * perpendicularX * spawnOffsetDirection,
         y: absoluteOffset * perpendicularY * spawnOffsetDirection,
     };
 }
 
-/**
- * Calculates the shortest distance from a point to a line segment.
- * @param {number} px - The x-coordinate of the point.
- * @param {number} py - The y-coordinate of the point.
- * @param {number} x1 - The x-coordinate of the segment's start.
- * @param {number} y1 - The y-coordinate of the segment's start.
- * @param {number} x2 - The x-coordinate of the segment's end.
- * @param {number} y2 - The y-coordinate of the segment's end.
- * @returns {number} The shortest distance.
- */
 function pointToSegmentDistance(px, py, x1, y1, x2, y2) {
     const lineLengthSquared = (x2 - x1) ** 2 + (y2 - y1) ** 2;
     if (lineLengthSquared === 0) return Math.hypot(px - x1, py - y1);
@@ -135,86 +138,103 @@ function pointToSegmentDistance(px, py, x1, y1, x2, y2) {
 // ------------------- Game Functions -------------------
 
 /**
- * Spawns enemies based on the current wave configuration.
+ * Initialize the next wave by setting up its spawn groups.
  */
-function spawnEnemies() {
-    if (!waveInProgress && waveDelayTimer <= 0) {
-        startNextWave();
+function startNextWave() {
+    if (currentWaveIndex >= waves.length) {
+        // All waves completed
+        gameWonFlag = true;
+        gameOverFlag = true; // To prevent further spawning
+        showWaveMessage('You Win!', 3000); // Display Victory Message for 3 seconds
+        return;
     }
 
-    if (waveInProgress) {
-        const currentWave = waves[currentWaveIndex];
-        const totalEnemiesInWave = currentWave.enemies.reduce(
-            (sum, group) => sum + group.count,
-            0,
-        );
+    const wave = waves[currentWaveIndex];
+    console.log(`Starting Wave ${wave.number}`);
 
-        if (waveSpawnTimer <= 0 && enemiesSpawnedInWave < totalEnemiesInWave) {
-            let enemyClass = null;
-            let enemiesSpawnedSoFar = 0;
+    // Initialize spawn groups with their timers
+    currentWaveSpawnGroups = wave.spawnGroups.map((group) => ({
+        class: group.class,
+        remainingCount: group.count,
+        spawnInterval: group.spawnInterval,
+        spawnTimer: group.startDelay, // Initialize with startDelay
+        active: false, // Indicates if the group has started spawning
+    }));
 
-            for (let group of currentWave.enemies) {
-                if (enemiesSpawnedInWave < enemiesSpawnedSoFar + group.count) {
-                    enemyClass = group.class;
-                    break;
-                }
-                enemiesSpawnedSoFar += group.count;
+    waveInProgress = true;
+    showWaveMessage(`Wave ${wave.number} Start!`, 2000); // Display Wave Start Message for 2 seconds
+}
+
+/**
+ * Update the spawning logic based on active spawn groups.
+ * @param {number} deltaTime - Time elapsed since last frame in ms
+ */
+function spawnEnemies(deltaTime) {
+    if (!waveInProgress) {
+        if (waveDelayTimer > 0) {
+            waveDelayTimer -= deltaTime;
+            if (waveDelayTimer <= 0) {
+                startNextWave();
             }
+        }
+        return;
+    }
 
-            if (enemyClass) {
-                // Determine enemy size based on class
+    // Iterate over a copy of currentWaveSpawnGroups to safely modify the array during iteration
+    currentWaveSpawnGroups.slice().forEach((spawnGroup, index) => {
+        if (!spawnGroup.active) {
+            // Countdown the startDelay
+            spawnGroup.spawnTimer -= deltaTime;
+            if (spawnGroup.spawnTimer <= 0) {
+                spawnGroup.active = true;
+                spawnGroup.spawnTimer = spawnGroup.spawnInterval; // Reset timer for spawning
+                console.log(
+                    `SpawnGroup started: ${spawnGroup.class.name}, Count: ${spawnGroup.remainingCount}`,
+                );
+            }
+        } else {
+            // Countdown the spawnInterval
+            spawnGroup.spawnTimer -= deltaTime;
+            if (spawnGroup.spawnTimer <= 0 && spawnGroup.remainingCount > 0) {
+                // Spawn an enemy
                 let enemySize;
-                if (enemyClass === BasicEnemy) {
+                if (spawnGroup.class === BasicEnemy) {
                     enemySize = 20;
-                } else if (enemyClass === FastEnemy) {
+                } else if (spawnGroup.class === FastEnemy) {
                     enemySize = 10;
-                } else if (enemyClass === TankEnemy) {
+                } else if (spawnGroup.class === TankEnemy) {
                     enemySize = 30;
+                } else if (spawnGroup.class === ShieldEnemy) {
+                    enemySize = 25;
+                } else if (spawnGroup.class === BossEnemy) {
+                    enemySize = 50; // Example size for Boss
                 } else {
                     enemySize = 20; // Default size
                 }
 
-                // Generate random spawn offset
                 const spawnOffset = generateRandomSpawnOffset(path, enemySize);
+                enemies.push(new spawnGroup.class(path, spawnOffset));
+                spawnGroup.remainingCount--;
+                spawnGroup.spawnTimer = spawnGroup.spawnInterval; // Reset spawn timer
 
-                // Instantiate enemy with spawnOffset
-                enemies.push(new enemyClass(path, spawnOffset));
-                enemiesSpawnedInWave++;
-                waveSpawnTimer = currentWave.spawnInterval;
-            } else {
-                console.error(
-                    'Enemy class not found for the current wave configuration.',
+                console.log(
+                    `Spawned ${spawnGroup.class.name}. Remaining: ${spawnGroup.remainingCount}`,
                 );
+
+                // If all enemies in this group have been spawned, remove the group
+                if (spawnGroup.remainingCount <= 0) {
+                    currentWaveSpawnGroups.splice(index, 1);
+                    console.log(
+                        `SpawnGroup completed: ${spawnGroup.class.name}`,
+                    );
+                }
             }
-        } else {
-            waveSpawnTimer--;
         }
+    });
 
-        // Check if the wave has ended
-        if (
-            enemiesSpawnedInWave >= totalEnemiesInWave &&
-            enemies.length === 0
-        ) {
-            endCurrentWave();
-        }
-    } else {
-        waveDelayTimer--;
-    }
-}
-
-/**
- * Starts the next wave of enemies.
- */
-function startNextWave() {
-    if (currentWaveIndex < waves.length) {
-        waveInProgress = true;
-        enemiesSpawnedInWave = 0;
-        waveSpawnTimer = 0;
-        displayWaveStart();
-    } else {
-        // All waves completed
-        displayVictory();
-        gameOverFlag = true;
+    // Check if all spawn groups have completed and no enemies are left
+    if (currentWaveSpawnGroups.length === 0 && enemies.length === 0) {
+        endCurrentWave();
     }
 }
 
@@ -223,23 +243,24 @@ function startNextWave() {
  */
 function endCurrentWave() {
     waveInProgress = false;
-    waveDelayTimer = 200; // Adjust as needed
+    waveDelayTimer = 2000; // Reset wave delay
     currentWaveIndex++;
-    displayWaveEnd();
+    showWaveMessage(`Wave ${currentWaveIndex} Complete!`, 2000); // Display Wave End Message for 2 seconds
+    console.log(`Wave ${currentWaveIndex} completed.`);
 }
 
 /**
- * Draws all enemy paths on the canvas.
+ * Draw all paths on the canvas.
  */
 function drawPaths() {
-    const PATH_COLORS = ['gray', 'orange', 'purple', 'cyan']; // Example colors
+    const PATH_COLORS = ['gray', 'orange', 'purple', 'cyan'];
 
     context.lineWidth = PATH_WIDTH;
     context.lineCap = 'round';
 
     MAPS.forEach((singlePath, index) => {
         const scaledPath = scalePath(singlePath);
-        context.strokeStyle = PATH_COLORS[index % PATH_COLORS.length]; // Cycle through colors
+        context.strokeStyle = PATH_COLORS[index % PATH_COLORS.length];
         context.beginPath();
         context.moveTo(scaledPath[0].x, scaledPath[0].y);
         for (let i = 1; i < scaledPath.length; i++) {
@@ -250,41 +271,59 @@ function drawPaths() {
 }
 
 /**
- * The main game loop, which updates and renders the game continuously.
+ * The main game loop.
  */
 function gameLoop() {
+    const currentTime = Date.now();
+    const deltaTime = currentTime - lastFrameTime; // Time elapsed since last frame in ms
+    lastFrameTime = currentTime;
+
     if (!gameOverFlag) {
-        update();
+        update(deltaTime);
         render();
         requestAnimationFrame(gameLoop);
     } else {
         render();
-        displayGameOver();
+        if (gameWonFlag) {
+            displayVictory();
+        } else {
+            displayGameOver();
+        }
     }
 }
 
 /**
- * Updates the game state, including enemies, towers, and projectiles.
+ * Update game state based on elapsed time.
+ * @param {number} deltaTime - Time elapsed since last frame in ms
  */
-function update() {
-    spawnEnemies();
+function update(deltaTime) {
+    // Handle Wave Messages Timer
+    if (waveMessageTimer > 0) {
+        waveMessageTimer -= deltaTime;
+        if (waveMessageTimer <= 0) {
+            waveMessage = '';
+        }
+    }
+
+    spawnEnemies(deltaTime);
 
     // Update enemies and remove defeated ones
     for (let enemy of enemies) {
         enemy.update();
     }
-    enemies.forEach((enemy, index) => {
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        const enemy = enemies[i];
         if (enemy.isDefeated) {
             if (enemy.health <= 0) {
                 score += enemy.points;
-                gold.value += enemy.value; // Adjust gold gain if desired
+                gold.value += enemy.value;
             } else {
-                lives--; // Lose a life if an enemy reaches the end
+                lives--;
                 if (lives <= 0) gameOverFlag = true;
             }
-            enemies.splice(index, 1); // Remove defeated enemy
+            enemies.splice(i, 1);
         }
-    });
+    }
 
     // Update towers and projectiles
     for (let tower of towers) {
@@ -294,15 +333,16 @@ function update() {
     for (let projectile of projectiles) {
         projectile.update();
     }
-    projectiles.forEach((projectile, index) => {
+    for (let i = projectiles.length - 1; i >= 0; i--) {
+        const projectile = projectiles[i];
         if (projectile.isExpired) {
-            projectiles.splice(index, 1); // Remove expired projectile
+            projectiles.splice(i, 1);
         }
-    });
+    }
 }
 
 /**
- * Renders all game elements on the canvas, including towers, enemies, projectiles, and UI.
+ * Render all game elements on the canvas.
  */
 function render() {
     context.clearRect(0, 0, canvas.width, canvas.height);
@@ -328,7 +368,7 @@ function render() {
     context.fillText(`Score: ${score}`, 10, 60);
     context.fillText(`Gold: ${gold.value}`, 10, 90);
     context.fillText(
-        `Wave: ${waves[currentWaveIndex]?.number || waves.length}`,
+        `Wave: ${currentWaveIndex < waves.length ? waves[currentWaveIndex].number : 'N/A'}`,
         10,
         120,
     );
@@ -337,7 +377,7 @@ function render() {
     // Render the tower preview as a square
     const preview = getPreview();
     if (preview.visible) {
-        context.fillStyle = preview.color; // Use the color based on placement validity
+        context.fillStyle = preview.color;
         context.fillRect(
             preview.x - TOWER_SIZE / 2,
             preview.y - TOWER_SIZE / 2,
@@ -345,10 +385,30 @@ function render() {
             TOWER_SIZE,
         );
     }
+
+    // Render Wave Messages
+    if (waveMessage) {
+        context.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.fillStyle = 'white';
+        context.font = '30px Arial';
+        context.textAlign = 'center';
+        context.fillText(waveMessage, canvas.width / 2, canvas.height / 2);
+    }
 }
 
 /**
- * Displays the "Game Over" screen.
+ * Display a wave-related message for a specified duration.
+ * @param {string} message - The message to display.
+ * @param {number} duration - Duration in milliseconds.
+ */
+function showWaveMessage(message, duration) {
+    waveMessage = message;
+    waveMessageTimer = duration;
+}
+
+/**
+ * Display the Game Over screen with a restart prompt.
  */
 function displayGameOver() {
     context.fillStyle = 'rgba(0, 0, 0, 0.7)';
@@ -356,17 +416,25 @@ function displayGameOver() {
     context.fillStyle = 'white';
     context.font = '40px Arial';
     context.textAlign = 'center';
-    context.fillText('Game Over', canvas.width / 2, canvas.height / 2);
+    context.fillText('Game Over', canvas.width / 2, canvas.height / 2 - 40);
     context.font = '20px Arial';
     context.fillText(
         `Final Score: ${score}`,
         canvas.width / 2,
-        canvas.height / 2 + 40,
+        canvas.height / 2,
     );
+    context.fillText(
+        'Tap/Click to Restart',
+        canvas.width / 2,
+        canvas.height / 2 + 60,
+    );
+
+    // Add event listeners for restart
+    addRestartListener();
 }
 
 /**
- * Displays the "You Win!" screen upon completing all waves.
+ * Display the Victory screen with a restart prompt.
  */
 function displayVictory() {
     context.fillStyle = 'rgba(0, 0, 0, 0.7)';
@@ -374,87 +442,86 @@ function displayVictory() {
     context.fillStyle = 'white';
     context.font = '40px Arial';
     context.textAlign = 'center';
-    context.fillText('You Win!', canvas.width / 2, canvas.height / 2);
+    context.fillText('You Win!', canvas.width / 2, canvas.height / 2 - 40);
     context.font = '20px Arial';
     context.fillText(
         `Final Score: ${score}`,
         canvas.width / 2,
-        canvas.height / 2 + 40,
+        canvas.height / 2,
     );
+    context.fillText(
+        'Tap/Click to Restart',
+        canvas.width / 2,
+        canvas.height / 2 + 60,
+    );
+
+    // Add event listeners for restart
+    addRestartListener();
 }
 
 /**
- * Displays a "Wave Start" message.
+ * Add event listeners for restarting the game.
  */
-function displayWaveStart() {
-    context.fillStyle = 'black';
-    context.font = '30px Arial';
-    context.textAlign = 'center';
-    context.fillText(
-        `Wave ${waves[currentWaveIndex].number} Start!`,
-        canvas.width / 2,
-        canvas.height / 2 - 40,
-    );
+function addRestartListener() {
+    // Define the handler
+    const handleRestart = () => {
+        // Remove this event listener after restart to prevent multiple triggers
+        canvas.removeEventListener('click', handleRestart);
+        canvas.removeEventListener('touchend', handleRestart);
+
+        // Reset the game state
+        resetGame();
+    };
+
+    // Add the listeners
+    canvas.addEventListener('click', handleRestart);
+    canvas.addEventListener('touchend', handleRestart);
 }
 
 /**
- * Displays a "Wave Complete" message.
+ * Reset the game to its initial state and start the first wave.
  */
-function displayWaveEnd() {
-    context.fillStyle = 'black';
-    context.font = '30px Arial';
-    context.textAlign = 'center';
-    context.fillText(
-        `Wave ${waves[currentWaveIndex].number} Complete!`,
-        canvas.width / 2,
-        canvas.height / 2 - 40,
-    );
+function resetGame() {
+    // Re-initialize game variables
+    initializeGame();
+
+    // Clear arrays just in case
+    enemies.length = 0;
+    towers.length = 0;
+    projectiles.length = 0;
+
+    // Clear any lingering visuals
+    context.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Restart the first wave
+    startNextWave();
+
+    // Restart the game loop
+    requestAnimationFrame(gameLoop);
 }
 
 /**
- * Displays a "Not enough gold!" message when the player tries to place a tower without sufficient funds.
+ * Check if the game is currently active.
+ * @returns {boolean} - True if active, else false.
  */
-function displayNotEnoughGold() {
-    context.fillStyle = 'red';
-    context.font = '30px Arial';
-    context.textAlign = 'center';
-    context.fillText(
-        'Not enough gold!',
-        canvas.width / 2,
-        canvas.height / 2 + 80,
-    );
-    setTimeout(render, 1000); // Clear the message after 1 second
-}
-
-/**
- * Displays a "Cannot place tower here!" message when placement is invalid.
- */
-function displayCannotPlaceHere() {
-    context.fillStyle = 'red';
-    context.font = '30px Arial';
-    context.textAlign = 'center';
-    context.fillText(
-        'Cannot place tower here!',
-        canvas.width / 2,
-        canvas.height / 2 + 80,
-    );
-    setTimeout(render, 1000); // Clear the message after 1 second
+function isGameActive() {
+    return !gameOverFlag && !gameWonFlag && waveMessage === '';
 }
 
 // ------------------- Game State Modification Functions -------------------
 
 /**
- * Adds a new tower to the game at the specified coordinates.
- * @param {number} x - The x-coordinate for the tower's placement.
- * @param {number} y - The y-coordinate for the tower's placement.
+ * Add a tower at the specified coordinates.
+ * @param {number} x - X-coordinate
+ * @param {number} y - Y-coordinate
  */
 function addTower(x, y) {
     towers.push(new Tower(x, y, context, enemies));
 }
 
 /**
- * Deducts a specified amount of gold from the player's total.
- * @param {number} amount - The amount of gold to deduct.
+ * Deduct gold by a specified amount.
+ * @param {number} amount - Amount to deduct
  */
 function deductGold(amount) {
     gold.value -= amount;
@@ -469,9 +536,22 @@ function displayCannotPlaceHereWrapper() {
     displayCannotPlaceHere();
 }
 
+/**
+ * Display a message when the player doesn't have enough gold.
+ */
+function displayNotEnoughGold() {
+    showWaveMessage('Not enough gold!', 1000); // Display for 1 second
+}
+
+/**
+ * Display a message when the player cannot place a tower at the desired location.
+ */
+function displayCannotPlaceHere() {
+    showWaveMessage('Cannot place tower here!', 1000); // Display for 1 second
+}
+
 // ------------------- Initialize Controls Module -------------------
 
-// Initialize the controls module by passing necessary dependencies
 initControls(canvas, {
     gold,
     deductGold,
@@ -480,20 +560,21 @@ initControls(canvas, {
     displayCannotPlaceHere: displayCannotPlaceHereWrapper,
     isOnPath,
     isOnTower,
+    isGameActive, // Pass the isGameActive function
 });
 
 // ------------------- Start the Game Loop -------------------
 
-// Begin the game loop
+startNextWave(); // Initialize the first wave
 requestAnimationFrame(gameLoop);
 
 // ------------------- Placement Validation Functions -------------------
 
 /**
- * Checks if the specified coordinates are on any enemy path.
- * @param {number} x - The x-coordinate to check.
- * @param {number} y - The y-coordinate to check.
- * @returns {boolean} True if on any path; otherwise, false.
+ * Check if a position is on the path.
+ * @param {number} x - X-coordinate
+ * @param {number} y - Y-coordinate
+ * @returns {boolean} - True if on path, else false
  */
 function isOnPath(x, y) {
     const halfPathWidth = PATH_WIDTH / 2;
@@ -515,10 +596,10 @@ function isOnPath(x, y) {
 }
 
 /**
- * Checks if the specified coordinates overlap with any existing tower.
- * @param {number} x - The x-coordinate to check.
- * @param {number} y - The y-coordinate to check.
- * @returns {boolean} True if overlapping a tower; otherwise, false.
+ * Check if a position overlaps with an existing tower.
+ * @param {number} x - X-coordinate
+ * @param {number} y - Y-coordinate
+ * @returns {boolean} - True if overlapping, else false
  */
 function isOnTower(x, y) {
     for (let tower of towers) {
@@ -526,7 +607,6 @@ function isOnTower(x, y) {
         const dy = y - tower.y;
         const distance = Math.hypot(dx, dy);
         if (distance < TOWER_SIZE) {
-            // Corrected from TOWER_SIZE / 2 to TOWER_SIZE
             // Prevent overlapping by ensuring the distance between towers is at least TOWER_SIZE
             return true;
         }
