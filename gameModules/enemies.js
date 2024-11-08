@@ -173,11 +173,11 @@ export class TankEnemy extends BasicEnemy {
         this.size = 30; // Size for TankEnemy
         this.width = this.size;
         this.height = this.size;
-        this.speed = 0.5; // Decrease speed
+        this.speed = 0.7; // Decrease speed
         this.health = 200; // Adjust health if needed
         this.maxHealth = 200;
         this.points = 30; // Adjust points awarded
-        this.value = 4; // Adjust gold value
+        this.value = 2; // Adjust gold value
     }
 
     render(context) {

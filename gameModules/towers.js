@@ -5,7 +5,7 @@ export default class Tower {
     constructor(x, y, context, enemies, removeProjectile, removeEnemy) {
         this.x = x;
         this.y = y;
-        this.range = 100;
+        this.range = 110;
         this.fireRate = 65;
         this.fireTimer = 0;
         this.context = context;

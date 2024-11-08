@@ -4,7 +4,7 @@ export const INITIAL_GOLD = 32;
 export const INITIAL_SCORE = 0;
 
 //Tower Config
-export const TOWER_SIZE = 40;
+export const TOWER_SIZE = 35;
 //Map Config
 export const PATH_WIDTH = 65;
 
