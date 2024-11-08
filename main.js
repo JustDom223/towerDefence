@@ -1,52 +1,133 @@
-// main.js
-
-// Import necessary modules
-import Tower from './towers.js';
+// ------------------- Import Necessary Modules -------------------
+import { BasicEnemy, FastEnemy, TankEnemy } from './enemies.js'; // Adjust the path as necessary
+import Tower from './towers.js'; // Import your Tower class
 import {
     PATH_WIDTH,
     TOWER_SIZE,
     INITIAL_GOLD,
     INITIAL_LIVES,
     INITIAL_SCORE,
-} from './gameConfig.js';
-import { waves } from './waves.js';
-import { initControls, getPreview } from './controls.js'; // Import controls module
+    MAPS,
+} from './gameConfig.js'; // Import your game configuration constants
+import { waves } from './waves.js'; // Import your waves configuration
+import { initControls, getPreview } from './controls.js'; // Import your controls module
+
+// ------------------- Canvas Setup -------------------
 
 // Get the canvas and context
 const canvas = document.getElementById('gameCanvas');
 const context = canvas.getContext('2d');
 
-// Set canvas dimensions to match the viewport
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+// Function to set canvas size based on the window size
+function setCanvasSize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+
+// Initial canvas size
+setCanvasSize();
 
 // Handle window resize
 window.addEventListener('resize', () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    setCanvasSize();
+    // Rescale paths if necessary
+    path = scalePath(MAPS[selectedMapIndex]);
 });
 
-// Game variables
-const path = [
-    { x: canvas.width * 0.2, y: 0 },
-    { x: canvas.width * 0.2, y: canvas.height * 0.6 },
-    { x: canvas.width * 0.8, y: canvas.height * 0.6 },
-    { x: canvas.width * 0.8, y: canvas.height },
-];
+// ------------------- Game Variables -------------------
 
+// Select a random map from MAPS
+const selectedMapIndex = Math.floor(Math.random() * MAPS.length);
+const rawPath = MAPS[selectedMapIndex];
+let path = scalePath(rawPath); // Scale the path based on canvas size
+
+// Initialize game entities
 const enemies = [];
 const towers = [];
 const projectiles = [];
 let lives = INITIAL_LIVES;
 let score = INITIAL_SCORE;
-let gold = { value: INITIAL_GOLD }; // Using object for mutability
+let gold = { value: INITIAL_GOLD }; // Using an object for mutability
 let gameOverFlag = false;
 
+// Wave management variables
 let currentWaveIndex = 0;
 let enemiesSpawnedInWave = 0;
 let waveSpawnTimer = 0;
 let waveInProgress = false;
 let waveDelayTimer = 200; // Frames to wait before starting the next wave
+
+// ------------------- Helper Functions -------------------
+
+/**
+ * Scales the path points based on the current canvas size.
+ * If your MAPS are defined with absolute positions, this function can be adjusted accordingly.
+ * For now, it returns the path as is.
+ * @param {Array} path - The path with absolute coordinates.
+ * @returns {Array} The scaled path.
+ */
+function scalePath(path) {
+    // If MAPS are defined with relative coordinates (percentages), implement scaling here.
+    // Currently assuming absolute coordinates.
+    return path.map(point => ({ x: point.x, y: point.y }));
+}
+
+/**
+ * Generates a random perpendicular offset within the path's width for enemy spawning.
+ * Ensures that enemies spawn within the path boundaries without overlapping.
+ * @param {Array} path - The array of points defining the path.
+ * @param {number} enemySize - The size (width/height) of the enemy.
+ * @returns {Object} The spawn offset { x, y }.
+ */
+function generateRandomSpawnOffset(path, enemySize) {
+    // Calculate the direction vector of the first segment
+    const dx = path[1].x - path[0].x;
+    const dy = path[1].y - path[0].y;
+    const distance = Math.hypot(dx, dy);
+    const perpendicularX = -dy / distance;
+    const perpendicularY = dx / distance;
+
+    // Define the maximum offset based on PATH_WIDTH and enemy size
+    const halfPathWidth = PATH_WIDTH / 2;
+    const maxOffset = halfPathWidth - enemySize / 2;
+    const minOffset = -maxOffset;
+
+    // Generate a random offset within [minOffset, maxOffset]
+    const spawnOffsetMagnitude = Math.random() * (maxOffset - minOffset) + minOffset;
+
+    // Determine spawnOffset direction based on spawnOffsetMagnitude
+    const spawnOffsetDirection = spawnOffsetMagnitude >= 0 ? 1 : -1;
+
+    // Absolute magnitude for consistent offset regardless of direction
+    const absoluteOffset = Math.abs(spawnOffsetMagnitude);
+
+    // Multiply by the perpendicular vector to get the offset components
+    return {
+        x: absoluteOffset * perpendicularX * spawnOffsetDirection,
+        y: absoluteOffset * perpendicularY * spawnOffsetDirection
+    };
+}
+
+/**
+ * Calculates the shortest distance from a point to a line segment.
+ * @param {number} px - The x-coordinate of the point.
+ * @param {number} py - The y-coordinate of the point.
+ * @param {number} x1 - The x-coordinate of the segment's start.
+ * @param {number} y1 - The y-coordinate of the segment's start.
+ * @param {number} x2 - The x-coordinate of the segment's end.
+ * @param {number} y2 - The y-coordinate of the segment's end.
+ * @returns {number} The shortest distance.
+ */
+function pointToSegmentDistance(px, py, x1, y1, x2, y2) {
+    const lineLengthSquared = (x2 - x1) ** 2 + (y2 - y1) ** 2;
+    if (lineLengthSquared === 0) return Math.hypot(px - x1, py - y1);
+
+    let t = ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / lineLengthSquared;
+    t = Math.max(0, Math.min(1, t));
+    const projectionX = x1 + t * (x2 - x1);
+    const projectionY = y1 + t * (y2 - y1);
+    return Math.hypot(px - projectionX, py - projectionY);
+}
 
 // ------------------- Game Functions -------------------
 
@@ -78,7 +159,23 @@ function spawnEnemies() {
             }
 
             if (enemyClass) {
-                enemies.push(new enemyClass(path));
+                // Determine enemy size based on class
+                let enemySize;
+                if (enemyClass === BasicEnemy) {
+                    enemySize = 20;
+                } else if (enemyClass === FastEnemy) {
+                    enemySize = 10;
+                } else if (enemyClass === TankEnemy) {
+                    enemySize = 30;
+                } else {
+                    enemySize = 20; // Default size
+                }
+
+                // Generate random spawn offset
+                const spawnOffset = generateRandomSpawnOffset(path, enemySize);
+
+                // Instantiate enemy with spawnOffset
+                enemies.push(new enemyClass(path, spawnOffset));
                 enemiesSpawnedInWave++;
                 waveSpawnTimer = currentWave.spawnInterval;
             } else {
@@ -127,18 +224,24 @@ function endCurrentWave() {
 }
 
 /**
- * Draws the enemy path on the canvas.
+ * Draws all enemy paths on the canvas.
  */
-function drawPath() {
-    context.strokeStyle = 'gray';
+function drawPaths() {
+    const PATH_COLORS = ['gray', 'orange', 'purple', 'cyan']; // Example colors
+
     context.lineWidth = PATH_WIDTH;
     context.lineCap = 'round';
-    context.beginPath();
-    context.moveTo(path[0].x, path[0].y);
-    for (let i = 1; i < path.length; i++) {
-        context.lineTo(path[i].x, path[i].y);
-    }
-    context.stroke();
+
+    MAPS.forEach((singlePath, index) => {
+        const scaledPath = scalePath(singlePath);
+        context.strokeStyle = PATH_COLORS[index % PATH_COLORS.length]; // Cycle through colors
+        context.beginPath();
+        context.moveTo(scaledPath[0].x, scaledPath[0].y);
+        for (let i = 1; i < scaledPath.length; i++) {
+            context.lineTo(scaledPath[i].x, scaledPath[i].y);
+        }
+        context.stroke();
+    });
 }
 
 /**
@@ -198,7 +301,7 @@ function update() {
  */
 function render() {
     context.clearRect(0, 0, canvas.width, canvas.height);
-    drawPath();
+    drawPaths();
 
     for (let tower of towers) {
         tower.render();
@@ -333,26 +436,74 @@ function displayCannotPlaceHere() {
     setTimeout(render, 1000); // Clear the message after 1 second
 }
 
-// ------------------- Helper Functions -------------------
+// ------------------- Game State Modification Functions -------------------
 
 /**
- * Checks if the specified coordinates are on the enemy path.
+ * Adds a new tower to the game at the specified coordinates.
+ * @param {number} x - The x-coordinate for the tower's placement.
+ * @param {number} y - The y-coordinate for the tower's placement.
+ */
+function addTower(x, y) {
+    towers.push(new Tower(x, y, context, enemies));
+}
+
+/**
+ * Deducts a specified amount of gold from the player's total.
+ * @param {number} amount - The amount of gold to deduct.
+ */
+function deductGold(amount) {
+    gold.value -= amount;
+}
+
+// Wrapper functions for displaying messages (to be passed to controls.js)
+function displayNotEnoughGoldWrapper() {
+    displayNotEnoughGold();
+}
+
+function displayCannotPlaceHereWrapper() {
+    displayCannotPlaceHere();
+}
+
+// ------------------- Initialize Controls Module -------------------
+
+// Initialize the controls module by passing necessary dependencies
+initControls(canvas, {
+    gold,
+    deductGold,
+    addTower,
+    displayNotEnoughGold: displayNotEnoughGoldWrapper,
+    displayCannotPlaceHere: displayCannotPlaceHereWrapper,
+    isOnPath,
+    isOnTower,
+});
+
+// ------------------- Start the Game Loop -------------------
+
+// Begin the game loop
+requestAnimationFrame(gameLoop);
+
+// ------------------- Placement Validation Functions -------------------
+
+/**
+ * Checks if the specified coordinates are on any enemy path.
  * @param {number} x - The x-coordinate to check.
  * @param {number} y - The y-coordinate to check.
- * @returns {boolean} True if on path; otherwise, false.
+ * @returns {boolean} True if on any path; otherwise, false.
  */
 function isOnPath(x, y) {
     const halfPathWidth = PATH_WIDTH / 2;
-    const towerRadius = TOWER_SIZE / 2; // Calculate the tower's radius
-    for (let i = 0; i < path.length - 1; i++) {
-        const x1 = path[i].x;
-        const y1 = path[i].y;
-        const x2 = path[i + 1].x;
-        const y2 = path[i + 1].y;
-        const distance = pointToSegmentDistance(x, y, x1, y1, x2, y2);
-        if (distance < halfPathWidth + towerRadius) {
-            // Adjusted distance check
-            return true;
+    const towerHalfSize = TOWER_SIZE / 2;
+    for (let singlePath of MAPS) {
+        const scaledPath = scalePath(singlePath);
+        for (let i = 0; i < scaledPath.length - 1; i++) {
+            const x1 = scaledPath[i].x;
+            const y1 = scaledPath[i].y;
+            const x2 = scaledPath[i + 1].x;
+            const y2 = scaledPath[i + 1].y;
+            const distance = pointToSegmentDistance(x, y, x1, y1, x2, y2);
+            if (distance < halfPathWidth + towerHalfSize) {
+                return true;
+            }
         }
     }
     return false;
@@ -376,75 +527,3 @@ function isOnTower(x, y) {
     }
     return false;
 }
-
-/**
- * Calculates the shortest distance from a point to a line segment.
- * @param {number} px - The x-coordinate of the point.
- * @param {number} py - The y-coordinate of the point.
- * @param {number} x1 - The x-coordinate of the segment's start.
- * @param {number} y1 - The y-coordinate of the segment's start.
- * @param {number} x2 - The x-coordinate of the segment's end.
- * @param {number} y2 - The y-coordinate of the segment's end.
- * @returns {number} The shortest distance.
- */
-function pointToSegmentDistance(px, py, x1, y1, x2, y2) {
-    const lineLengthSquared = (x2 - x1) ** 2 + (y2 - y1) ** 2;
-    if (lineLengthSquared === 0) return Math.hypot(px - x1, py - y1);
-
-    let t = ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / lineLengthSquared;
-    t = Math.max(0, Math.min(1, t));
-    const projectionX = x1 + t * (x2 - x1);
-    const projectionY = y1 + t * (y2 - y1);
-    return Math.hypot(px - projectionX, py - projectionY);
-}
-
-// ------------------- Game State Modification Functions -------------------
-
-/**
- * Adds a new tower to the game at the specified coordinates.
- * @param {number} x - The x-coordinate for the tower's placement.
- * @param {number} y - The y-coordinate for the tower's placement.
- */
-function addTower(x, y) {
-    towers.push(new Tower(x, y, context, enemies));
-}
-
-/**
- * Deducts a specified amount of gold from the player's total.
- * @param {number} amount - The amount of gold to deduct.
- */
-function deductGold(amount) {
-    gold.value -= amount;
-}
-
-/**
- * Wrapper function to display "Not enough gold!" message.
- */
-function displayNotEnoughGoldWrapper() {
-    displayNotEnoughGold();
-}
-
-/**
- * Wrapper function to display "Cannot place tower here!" message.
- */
-function displayCannotPlaceHereWrapper() {
-    displayCannotPlaceHere();
-}
-
-// ------------------- Initialize Controls Module -------------------
-
-// Initialize the controls module by passing necessary dependencies
-initControls(canvas, {
-    gold,
-    deductGold,
-    addTower,
-    displayNotEnoughGold: displayNotEnoughGoldWrapper,
-    displayCannotPlaceHere: displayCannotPlaceHereWrapper,
-    isOnPath,
-    isOnTower,
-});
-
-// ------------------- Start the Game Loop -------------------
-
-// Begin the game loop
-requestAnimationFrame(gameLoop);
