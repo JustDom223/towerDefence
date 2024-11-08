@@ -104,6 +104,12 @@ export const waves = [
                 spawnInterval: 800,
                 startDelay: 6000, // Start 6 seconds after the wave begins
             },
+            {
+                class: FastEnemy,
+                count: 15,
+                spawnInterval: 10,
+                startDelay: 0,
+            },
         ],
     },
     // Wave 6

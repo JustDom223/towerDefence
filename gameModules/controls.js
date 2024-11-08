@@ -28,6 +28,18 @@ export function initControls(canvas, dependencies) {
     // Flag to track if touch is active to prevent mouse events during touch
     let isTouchActive = false;
 
+    // ------------------- Helper Function -------------------
+    /**
+     * Adjusts the y-coordinate for touch devices to prevent finger obstruction.
+     * @param {number} y - Original y-coordinate.
+     * @returns {number} - Adjusted y-coordinate.
+     */
+    function adjustYForTouch(y) {
+        return y - 20; // Shift up by 10 pixels
+    }
+
+    // ------------------- Mouse Event Handlers -------------------
+    
     // Handle mouse movement to update the preview position
     canvas.addEventListener('mousemove', function (event) {
         if (isTouchActive) return; // Ignore mouse events if touch is active
@@ -44,7 +56,7 @@ export function initControls(canvas, dependencies) {
 
         // Update preview position and visibility
         preview.x = x;
-        preview.y = y;
+        preview.y = y; // No shift for mouse events
         const canPlace = !isOnPath(x, y) && !isOnTower(x, y);
         preview.visible = true;
         preview.color = canPlace ? 'rgba(0, 255, 0, 0.3)' : 'rgba(255, 0, 0, 0.3)';
@@ -74,6 +86,8 @@ export function initControls(canvas, dependencies) {
         }
     });
 
+    // ------------------- Touch Event Handlers -------------------
+
     // Handle touchstart to initiate tower placement preview
     canvas.addEventListener('touchstart', function (event) {
         isTouchActive = true;
@@ -91,10 +105,10 @@ export function initControls(canvas, dependencies) {
         const x = (touch.clientX - rect.left) * scaleX;
         const y = (touch.clientY - rect.top) * scaleY;
 
-        // Update preview position and visibility
+        // Update preview position and visibility with y adjustment
         preview.x = x;
-        preview.y = y;
-        const canPlace = !isOnPath(x, y) && !isOnTower(x, y);
+        preview.y = adjustYForTouch(y); // Shift up by 10 pixels for touch
+        const canPlace = !isOnPath(x, preview.y) && !isOnTower(x, preview.y);
         preview.visible = true;
         preview.color = canPlace ? 'rgba(0, 255, 0, 0.3)' : 'rgba(255, 0, 0, 0.3)';
     }, { passive: false });
@@ -116,10 +130,10 @@ export function initControls(canvas, dependencies) {
         const x = (touch.clientX - rect.left) * scaleX;
         const y = (touch.clientY - rect.top) * scaleY;
 
-        // Update preview position and visibility
+        // Update preview position and visibility with y adjustment
         preview.x = x;
-        preview.y = y;
-        const canPlace = !isOnPath(x, y) && !isOnTower(x, y);
+        preview.y = adjustYForTouch(y); // Shift up by 10 pixels for touch
+        const canPlace = !isOnPath(x, preview.y) && !isOnTower(x, preview.y);
         preview.color = canPlace ? 'rgba(0, 255, 0, 0.3)' : 'rgba(255, 0, 0, 0.3)';
     }, { passive: false });
 
@@ -131,7 +145,7 @@ export function initControls(canvas, dependencies) {
         if (!isGameActive()) return; // Ignore tower placement if game is not active
 
         const x = preview.x;
-        const y = preview.y;
+        const y = preview.y; // Already adjusted in touchstart/move
         const canPlace = !isOnPath(x, y) && !isOnTower(x, y);
 
         if (canPlace) {

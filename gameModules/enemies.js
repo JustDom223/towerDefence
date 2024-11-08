@@ -139,7 +139,7 @@ export class FastEnemy extends BasicEnemy {
         this.health = 75; // Adjust health if needed
         this.maxHealth = 75;
         this.points = 15; // Adjust points awarded
-        this.value = 2; // Adjust gold value
+        this.value = .5; // Adjust gold value
     }
 
     render(context) {
