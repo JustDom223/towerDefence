@@ -1,5 +1,3 @@
-// enemies.js
-
 export class BasicEnemy {
     /**
      * Constructs a new BasicEnemy instance.

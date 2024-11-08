@@ -1,6 +1,8 @@
+// main.js
+
 // ------------------- Import Necessary Modules -------------------
-import { BasicEnemy, FastEnemy, TankEnemy } from './enemies.js'; // Adjust the path as necessary
-import Tower from './towers.js'; // Import your Tower class
+import { BasicEnemy, FastEnemy, TankEnemy } from './gameModules/enemies.js'; // Adjust the path as necessary
+import Tower from './gameModules/towers.js'; // Import your Tower class
 import {
     PATH_WIDTH,
     TOWER_SIZE,
@@ -8,9 +10,9 @@ import {
     INITIAL_LIVES,
     INITIAL_SCORE,
     MAPS,
-} from './gameConfig.js'; // Import your game configuration constants
-import { waves } from './waves.js'; // Import your waves configuration
-import { initControls, getPreview } from './controls.js'; // Import your controls module
+} from './gameModules/gameConfig.js'; // Import your game configuration constants
+import { waves } from './gameModules/waves.js'; // Import your waves configuration
+import { initControls, getPreview } from './gameModules/controls.js'; // Import your controls module
 
 // ------------------- Canvas Setup -------------------
 
@@ -61,15 +63,15 @@ let waveDelayTimer = 200; // Frames to wait before starting the next wave
 
 /**
  * Scales the path points based on the current canvas size.
- * If your MAPS are defined with absolute positions, this function can be adjusted accordingly.
- * For now, it returns the path as is.
+ * If your MAPS are defined with relative coordinates, implement scaling here.
+ * Currently assuming absolute coordinates.
  * @param {Array} path - The path with absolute coordinates.
  * @returns {Array} The scaled path.
  */
 function scalePath(path) {
     // If MAPS are defined with relative coordinates (percentages), implement scaling here.
     // Currently assuming absolute coordinates.
-    return path.map(point => ({ x: point.x, y: point.y }));
+    return path.map((point) => ({ x: point.x, y: point.y }));
 }
 
 /**
@@ -93,7 +95,8 @@ function generateRandomSpawnOffset(path, enemySize) {
     const minOffset = -maxOffset;
 
     // Generate a random offset within [minOffset, maxOffset]
-    const spawnOffsetMagnitude = Math.random() * (maxOffset - minOffset) + minOffset;
+    const spawnOffsetMagnitude =
+        Math.random() * (maxOffset - minOffset) + minOffset;
 
     // Determine spawnOffset direction based on spawnOffsetMagnitude
     const spawnOffsetDirection = spawnOffsetMagnitude >= 0 ? 1 : -1;
@@ -104,7 +107,7 @@ function generateRandomSpawnOffset(path, enemySize) {
     // Multiply by the perpendicular vector to get the offset components
     return {
         x: absoluteOffset * perpendicularX * spawnOffsetDirection,
-        y: absoluteOffset * perpendicularY * spawnOffsetDirection
+        y: absoluteOffset * perpendicularY * spawnOffsetDirection,
     };
 }
 
@@ -179,7 +182,9 @@ function spawnEnemies() {
                 enemiesSpawnedInWave++;
                 waveSpawnTimer = currentWave.spawnInterval;
             } else {
-                console.error('Enemy class not found for the current wave configuration.');
+                console.error(
+                    'Enemy class not found for the current wave configuration.',
+                );
             }
         } else {
             waveSpawnTimer--;
@@ -337,7 +342,7 @@ function render() {
             preview.x - TOWER_SIZE / 2,
             preview.y - TOWER_SIZE / 2,
             TOWER_SIZE,
-            TOWER_SIZE
+            TOWER_SIZE,
         );
     }
 }
@@ -520,8 +525,9 @@ function isOnTower(x, y) {
         const dx = x - tower.x;
         const dy = y - tower.y;
         const distance = Math.hypot(dx, dy);
-        if (distance < TOWER_SIZE / 2) {
-            // This already accounts for tower size, since TOWER_SIZE is diameter
+        if (distance < TOWER_SIZE) {
+            // Corrected from TOWER_SIZE / 2 to TOWER_SIZE
+            // Prevent overlapping by ensuring the distance between towers is at least TOWER_SIZE
             return true;
         }
     }

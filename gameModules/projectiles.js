@@ -1,5 +1,3 @@
-// projectiles.js
-
 export default class Projectile {
     constructor(x, y, target, damage, context) {
         this.x = x;

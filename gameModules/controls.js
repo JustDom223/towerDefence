@@ -1,5 +1,3 @@
-// controls.js
-
 // Initialize the preview state
 let preview = {
     x: 0,
