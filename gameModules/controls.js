@@ -18,8 +18,8 @@ export function initControls(canvas, dependencies) {
         gold,
         deductGold,
         addTower,
-        displayNotEnoughGold,
-        displayCannotPlaceHere,
+        // displayNotEnoughGold,
+        // displayCannotPlaceHere,
         isOnPath,
         isOnTower,
         isGameActive, // New dependency
@@ -79,10 +79,12 @@ export function initControls(canvas, dependencies) {
                 addTower(x, y);
                 deductGold(10);
             } else {
-                displayNotEnoughGold();
+                console.log('Not enough gold')
+                // displayNotEnoughGold();
             }
         } else {
-            displayCannotPlaceHere();
+            // displayCannotPlaceHere();
+            console.log("Cannot place here")
         }
     });
 

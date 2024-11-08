@@ -120,7 +120,7 @@ export const waves = [
                 class: BasicEnemy,
                 count: 20,
                 spawnInterval: 850,
-                startDelay: 0,
+                startDelay: 4000,
             },
             {
                 class: FastEnemy,
@@ -132,7 +132,7 @@ export const waves = [
                 class: TankEnemy,
                 count: 6,
                 spawnInterval: 1000,
-                startDelay: 4000,
+                startDelay: 0,
             },
             // {
             //     class: ShieldEnemy,
@@ -150,7 +150,7 @@ export const waves = [
                 class: FastEnemy,
                 count: 20,
                 spawnInterval: 450,
-                startDelay: 0,
+                startDelay: 5000,
             },
             {
                 class: TankEnemy,
@@ -162,7 +162,7 @@ export const waves = [
                 class: BasicEnemy,
                 count: 25,
                 spawnInterval: 700,
-                startDelay: 5000,
+                startDelay: 0,
             },
             // {
             //     class: ShieldEnemy,
@@ -186,13 +186,13 @@ export const waves = [
                 class: FastEnemy,
                 count: 15,
                 spawnInterval: 500,
-                startDelay: 2000,
+                startDelay: 4000,
             },
             {
                 class: TankEnemy,
                 count: 8,
                 spawnInterval: 800,
-                startDelay: 4000,
+                startDelay: 2000,
             },
             // {
             //     class: ShieldEnemy,

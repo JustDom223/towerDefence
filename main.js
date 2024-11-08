@@ -6,7 +6,7 @@ import {
   FastEnemy,
   TankEnemy,
   // ShieldEnemy,
-  // BossEnemy, // Ensure BossEnemy is imported if used in waves
+  // BossEnemy, // Uncomment if used in waves
 } from './gameModules/enemies.js';
 import Tower from './gameModules/towers.js';
 import {
@@ -15,10 +15,11 @@ import {
   INITIAL_GOLD,
   INITIAL_LIVES,
   INITIAL_SCORE,
-  MAPS,
+  MAPS
 } from './gameModules/gameConfig.js';
 import { waves } from './gameModules/waves.js';
 import { initControls, getPreview } from './gameModules/controls.js';
+
 
 // ------------------- Canvas Setup -------------------
 
@@ -34,7 +35,7 @@ setCanvasSize();
 
 window.addEventListener('resize', () => {
   setCanvasSize();
-  path = scalePath(MAPS[selectedMapIndex]);
+  path = scalePath(rawPath);
 });
 
 // ------------------- Game Variables -------------------
@@ -90,8 +91,16 @@ initializeGame();
 
 // ------------------- Helper Functions -------------------
 
-function scalePath(path) {
-  return path.map((point) => ({ x: point.x, y: point.y }));
+/**
+* Scales a path defined with relative coordinates to actual canvas size.
+* @param {Array} relativePath - Array of points with x and y as percentages.
+* @returns {Array} scaledPath - Array of points with x and y in pixels.
+*/
+function scalePath(relativePath) {
+  return relativePath.map(point => ({
+      x: (point.x / 100) * canvas.width,
+      y: (point.y / 100) * canvas.height,
+  }));
 }
 
 function generateRandomSpawnOffset(path, enemySize) {
@@ -153,7 +162,7 @@ function startNextWave() {
   }));
 
   waveInProgress = true;
-  // Removed: showWaveMessage(`Wave ${wave.number} Start!`, 2000);
+  // Removed wave message display
 }
 
 /**
@@ -195,10 +204,6 @@ function spawnEnemies(deltaTime) {
                   enemySize = 10;
               } else if (spawnGroup.class === TankEnemy) {
                   enemySize = 30;
-              } else if (spawnGroup.class === ShieldEnemy) {
-                  enemySize = 25;
-              } else if (spawnGroup.class === BossEnemy) {
-                  enemySize = 50; // Example size for Boss
               } else {
                   enemySize = 20; // Default size
               }
@@ -234,7 +239,7 @@ function endCurrentWave() {
   waveInProgress = false;
   waveDelayTimer = 2000; // Reset wave delay
   currentWaveIndex++;
-  // Removed: showWaveMessage(`Wave ${currentWaveIndex} Complete!`, 2000);
+  // Removed wave message display
   console.log(`Wave ${currentWaveIndex} completed.`);
 }
 
