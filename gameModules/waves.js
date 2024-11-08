@@ -96,7 +96,7 @@ export const waves = [
                 class: TankEnemy,
                 count: 5,
                 spawnInterval: 1100,
-                startDelay: 3000, // Start 3 seconds after the wave begins
+                startDelay: 0, // Start 3 seconds after the wave begins
             },
             {
                 class: BasicEnemy,
@@ -108,7 +108,7 @@ export const waves = [
                 class: FastEnemy,
                 count: 15,
                 spawnInterval: 10,
-                startDelay: 0,
+                startDelay: 4000,
             },
         ],
     },
