@@ -1,5 +1,5 @@
 //Game Config
-export const INITIAL_LIVES = 5;
+export const INITIAL_LIVES = 20;
 export const INITIAL_GOLD = 29;
 export const INITIAL_SCORE = 0;
 

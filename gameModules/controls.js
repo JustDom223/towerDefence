@@ -1,3 +1,5 @@
+// controls.js
+
 // Initialize the preview state
 let preview = {
     x: 0,
@@ -20,6 +22,7 @@ export function initControls(canvas, dependencies) {
         displayCannotPlaceHere,
         isOnPath,
         isOnTower,
+        isGameActive, // New dependency
     } = dependencies;
 
     // Flag to track if touch is active to prevent mouse events during touch
@@ -28,6 +31,10 @@ export function initControls(canvas, dependencies) {
     // Handle mouse movement to update the preview position
     canvas.addEventListener('mousemove', function (event) {
         if (isTouchActive) return; // Ignore mouse events if touch is active
+        if (!isGameActive()) {
+            preview.visible = false;
+            return; // Do not update preview if game is not active
+        }
 
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
@@ -46,6 +53,7 @@ export function initControls(canvas, dependencies) {
     // Handle mouse click to place tower
     canvas.addEventListener('click', function (event) {
         if (isTouchActive) return; // Ignore mouse clicks if touch is active
+        if (!isGameActive()) return; // Ignore tower placement if game is not active
 
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
@@ -71,6 +79,11 @@ export function initControls(canvas, dependencies) {
         isTouchActive = true;
         event.preventDefault(); // Prevent default touch behavior (like scrolling)
 
+        if (!isGameActive()) {
+            preview.visible = false;
+            return; // Do not update preview if game is not active
+        }
+
         const touch = event.touches[0];
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
@@ -91,6 +104,11 @@ export function initControls(canvas, dependencies) {
         if (!isTouchActive) return;
         event.preventDefault(); // Prevent default touch behavior
 
+        if (!isGameActive()) {
+            preview.visible = false;
+            return; // Do not update preview if game is not active
+        }
+
         const touch = event.touches[0];
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
@@ -109,6 +127,8 @@ export function initControls(canvas, dependencies) {
     canvas.addEventListener('touchend', function (event) {
         if (!isTouchActive) return;
         event.preventDefault(); // Prevent default touch behavior
+
+        if (!isGameActive()) return; // Ignore tower placement if game is not active
 
         const x = preview.x;
         const y = preview.y;
