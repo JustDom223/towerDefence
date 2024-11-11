@@ -1,5 +1,3 @@
-// main.js
-
 // ------------------- Import Necessary Modules -------------------
 import {
   BasicEnemy,
@@ -27,14 +25,15 @@ const canvas = document.getElementById('gameCanvas');
 const context = canvas.getContext('2d');
 
 function setCanvasSize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  // canvas.width = window.innerWidth;
+  // canvas.height = window.innerHeight;
+  canvas.width = 1080
+  canvas.height = 1920
 }
 
 setCanvasSize();
 
 window.addEventListener('resize', () => {
-  setCanvasSize();
   path = scalePath(rawPath);
 });
 
