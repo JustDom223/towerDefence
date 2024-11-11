@@ -5,7 +5,7 @@ export class BasicEnemy {
      * @param {Object} spawnOffset - The perpendicular offset { x, y } from the path's center.
      */
     constructor(path, spawnOffset = { x: 0, y: 0 }) {
-        this.size = 20; // Size for BasicEnemy
+        this.size = 50; // Size for BasicEnemy
         this.width = this.size;
         this.height = this.size;
         this.health = 100;
@@ -132,7 +132,7 @@ export class BasicEnemy {
 export class FastEnemy extends BasicEnemy {
     constructor(path, spawnOffset = { x: 0, y: 0 }) {
         super(path, spawnOffset); // Call the base class constructor
-        this.size = 10; // Size for FastEnemy
+        this.size = 25; // Size for FastEnemy
         this.width = this.size;
         this.height = this.size;
         this.speed = 2; // Increase speed
@@ -170,7 +170,7 @@ export class FastEnemy extends BasicEnemy {
 export class TankEnemy extends BasicEnemy {
     constructor(path, spawnOffset = { x: 0, y: 0 }) {
         super(path, spawnOffset); // Call the base class constructor
-        this.size = 30; // Size for TankEnemy
+        this.size = 75; // Size for TankEnemy
         this.width = this.size;
         this.height = this.size;
         this.speed = 0.7; // Decrease speed

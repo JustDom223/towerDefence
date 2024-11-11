@@ -4,9 +4,16 @@ export const INITIAL_GOLD = 32;
 export const INITIAL_SCORE = 0;
 
 //Tower Config
-export const TOWER_SIZE = 35;
+export const TOWER_SIZE = 100;
+export const TARGETINGMODES = {
+  MOST_HEALTH: 'most_health',
+  CLOSEST_TO_EXIT: 'closest_to_exit',
+  LAST_ENTERED: 'last_entered',
+  LEAST_HEALTH: 'least_health',
+};
+
 //Map Config
-export const PATH_WIDTH = 65;
+export const PATH_WIDTH = 100;
 
 // Maps
 export const MAPS = [
