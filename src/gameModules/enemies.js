@@ -11,7 +11,10 @@ export class BasicEnemy {
         this.health = 100;
         this.maxHealth = 100;
         this.speed = 1;
-        this.position = { x: path[0].x + spawnOffset.x, y: path[0].y + spawnOffset.y };
+        this.position = {
+            x: path[0].x + spawnOffset.x,
+            y: path[0].y + spawnOffset.y,
+        };
         this.waypointIndex = 0;
         this.path = path;
         this.spawnOffsetMagnitude = Math.hypot(spawnOffset.x, spawnOffset.y); // Fixed magnitude
@@ -45,8 +48,14 @@ export class BasicEnemy {
 
         // Recalculate spawnOffset based on initial magnitude and current segment's perpendicular vector
         this.spawnOffset = {
-            x: this.spawnOffsetMagnitude * perpendicularX * this.spawnOffsetDirection,
-            y: this.spawnOffsetMagnitude * perpendicularY * this.spawnOffsetDirection
+            x:
+                this.spawnOffsetMagnitude *
+                perpendicularX *
+                this.spawnOffsetDirection,
+            y:
+                this.spawnOffsetMagnitude *
+                perpendicularY *
+                this.spawnOffsetDirection,
         };
 
         // Calculate target position with spawnOffset
@@ -125,7 +134,12 @@ export class BasicEnemy {
 
         // Draw current health level
         context.fillStyle = 'green';
-        context.fillRect(barX, barY, barWidth * (this.health / this.maxHealth), barHeight);
+        context.fillRect(
+            barX,
+            barY,
+            barWidth * (this.health / this.maxHealth),
+            barHeight,
+        );
     }
 }
 
@@ -139,7 +153,7 @@ export class FastEnemy extends BasicEnemy {
         this.health = 75; // Adjust health if needed
         this.maxHealth = 75;
         this.points = 15; // Adjust points awarded
-        this.value = .5; // Adjust gold value
+        this.value = 0.5; // Adjust gold value
     }
 
     render(context) {
