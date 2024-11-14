@@ -1,47 +1,46 @@
-// controls.js
+interface Preview {
+    x: number;
+    y: number;
+    visible: boolean;
+    color: string;
+}
+
+interface Dependencies {
+    gold: { value: number };
+    deductGold: (amount: number) => void;
+    addTower: (x: number, y: number) => void;
+    isOnPath: (x: number, y: number) => boolean;
+    isOnTower: (x: number, y: number) => boolean;
+    isGameActive: () => boolean;
+}
 
 // Initialize the preview state
-let preview = {
+let preview: Preview = {
     x: 0,
     y: 0,
     visible: false,
     color: 'rgba(0, 0, 255, 0.3)', // Default to blue for valid placement
 };
 
-/**
- * Initializes game controls, handling mouse and touch events for tower placement.
- * @param {HTMLCanvasElement} canvas - The game canvas element.
- * @param {Object} dependencies - An object containing game state and utility functions.
- */
-export function initControls(canvas, dependencies) {
-    const {
-        gold,
-        deductGold,
-        addTower,
-        // displayNotEnoughGold,
-        // displayCannotPlaceHere,
-        isOnPath,
-        isOnTower,
-        isGameActive, // New dependency
-    } = dependencies;
+export function initControls(
+    canvas: HTMLCanvasElement,
+    dependencies: Dependencies,
+): void {
+    const { gold, deductGold, addTower, isOnPath, isOnTower, isGameActive } =
+        dependencies;
 
     // Flag to track if touch is active to prevent mouse events during touch
     let isTouchActive = false;
 
     // ------------------- Helper Function -------------------
-    /**
-     * Adjusts the y-coordinate for touch devices to prevent finger obstruction.
-     * @param {number} y - Original y-coordinate.
-     * @returns {number} - Adjusted y-coordinate.
-     */
-    function adjustYForTouch(y) {
-        return y - 20; // Shift up by 10 pixels
+    function adjustYForTouch(y: number): number {
+        return y - 20; // Shift up by 20 pixels
     }
 
     // ------------------- Mouse Event Handlers -------------------
 
     // Handle mouse movement to update the preview position
-    canvas.addEventListener('mousemove', function (event) {
+    canvas.addEventListener('mousemove', function (event: MouseEvent): void {
         if (isTouchActive) return; // Ignore mouse events if touch is active
         if (!isGameActive()) {
             preview.visible = false;
@@ -65,7 +64,7 @@ export function initControls(canvas, dependencies) {
     });
 
     // Handle mouse click to place tower
-    canvas.addEventListener('click', function (event) {
+    canvas.addEventListener('click', function (event: MouseEvent): void {
         if (isTouchActive) return; // Ignore mouse clicks if touch is active
         if (!isGameActive()) return; // Ignore tower placement if game is not active
 
@@ -82,10 +81,8 @@ export function initControls(canvas, dependencies) {
                 deductGold(10);
             } else {
                 console.log('Not enough gold');
-                // displayNotEnoughGold();
             }
         } else {
-            // displayCannotPlaceHere();
             console.log('Cannot place here');
         }
     });
@@ -95,7 +92,7 @@ export function initControls(canvas, dependencies) {
     // Handle touchstart to initiate tower placement preview
     canvas.addEventListener(
         'touchstart',
-        function (event) {
+        function (event: TouchEvent): void {
             isTouchActive = true;
             event.preventDefault(); // Prevent default touch behavior (like scrolling)
 
@@ -113,7 +110,7 @@ export function initControls(canvas, dependencies) {
 
             // Update preview position and visibility with y adjustment
             preview.x = x;
-            preview.y = adjustYForTouch(y); // Shift up by 10 pixels for touch
+            preview.y = adjustYForTouch(y); // Shift up by 20 pixels for touch
             const canPlace =
                 !isOnPath(x, preview.y) && !isOnTower(x, preview.y);
             preview.visible = true;
@@ -127,7 +124,7 @@ export function initControls(canvas, dependencies) {
     // Handle touchmove to update tower placement preview position
     canvas.addEventListener(
         'touchmove',
-        function (event) {
+        function (event: TouchEvent): void {
             if (!isTouchActive) return;
             event.preventDefault(); // Prevent default touch behavior
 
@@ -145,7 +142,7 @@ export function initControls(canvas, dependencies) {
 
             // Update preview position and visibility with y adjustment
             preview.x = x;
-            preview.y = adjustYForTouch(y); // Shift up by 10 pixels for touch
+            preview.y = adjustYForTouch(y); // Shift up by 20 pixels for touch
             const canPlace =
                 !isOnPath(x, preview.y) && !isOnTower(x, preview.y);
             preview.color = canPlace
@@ -158,7 +155,7 @@ export function initControls(canvas, dependencies) {
     // Handle touchend to place tower if placement is valid
     canvas.addEventListener(
         'touchend',
-        function (event) {
+        function (event: TouchEvent): void {
             if (!isTouchActive) return;
             event.preventDefault(); // Prevent default touch behavior
 
@@ -173,10 +170,10 @@ export function initControls(canvas, dependencies) {
                     addTower(x, y);
                     deductGold(10);
                 } else {
-                    displayNotEnoughGold();
+                    console.log('Not enough gold');
                 }
             } else {
-                displayCannotPlaceHere();
+                console.log('Cannot place here');
             }
 
             // Reset preview visibility
@@ -187,10 +184,6 @@ export function initControls(canvas, dependencies) {
     );
 }
 
-/**
- * Retrieves the current preview state.
- * @returns {Object} The preview state containing x, y coordinates, visibility, and color.
- */
-export function getPreview() {
+export function getPreview(): Preview {
     return preview;
 }

@@ -4,10 +4,12 @@
     "description": "This README serves as a quick reference for setting up a new project environment from scratch. It will help ensure consistency across all projects and save time.",
     "main": "script.js",
     "scripts": {
-        "build": "tsc",
         "lint": "eslint 'src/**/*.{js,ts}'",
         "lint:fix": "eslint 'src/**/*.{js,ts}' --fix",
-        "format": "prettier --write 'src/**/*.{js,ts,json}'"
+        "format": "prettier --write 'src/**/*.{js,ts,json}'",
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview"
     },
     "keywords": [],
     "author": "",
@@ -24,6 +26,8 @@
         "typescript": "^5.6.3"
     },
     "dependencies": {
-        "excalibur": "^0.29.3"
+        "excalibur": "^0.29.3",
+        "vite": "^5.4.11",
+        "vite-plugin-tsconfig-paths": "^1.4.1"
     }
 }

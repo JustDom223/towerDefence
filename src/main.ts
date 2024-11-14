@@ -5,8 +5,8 @@ import {
     TankEnemy,
     // ShieldEnemy,
     // BossEnemy, // Uncomment if used in waves
-} from './gameModules/enemies.js';
-import Tower from './gameModules/towers.js';
+} from './gameModules/enemies';
+import Tower from './gameModules/towers';
 import {
     PATH_WIDTH,
     TOWER_SIZE,
@@ -14,16 +14,16 @@ import {
     INITIAL_LIVES,
     INITIAL_SCORE,
     MAPS,
-} from './gameModules/gameConfig.js';
-import { waves } from './gameModules/waves.js';
-import { initControls, getPreview } from './gameModules/controls.js';
+} from './gameModules/gameConfig';
+import { waves } from './gameModules/waves';
+import { initControls, getPreview } from './gameModules/controls';
 
 // ------------------- Canvas Setup -------------------
 
-const canvas = document.getElementById('gameCanvas');
-const context = canvas.getContext('2d');
+const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+const context = canvas.getContext('2d') as CanvasRenderingContext2D;
 
-function setCanvasSize() {
+function setCanvasSize(): void {
     // canvas.width = window.innerWidth;
     // canvas.height = window.innerHeight;
     canvas.width = 1080;
@@ -39,30 +39,40 @@ window.addEventListener('resize', () => {
 // ------------------- Game Variables -------------------
 
 // Define gold as a constant object to maintain reference
-const gold = { value: INITIAL_GOLD };
-let score = INITIAL_SCORE;
+const gold: { value: number } = { value: INITIAL_GOLD };
+let score: number = INITIAL_SCORE;
 
 // Other game state variables
-let selectedMapIndex;
-let rawPath;
-let path;
+let selectedMapIndex: number;
+let rawPath: Array<{ x: number; y: number }>;
+let path: Array<{ x: number; y: number }>;
 
-let enemies;
-let towers;
-let projectiles;
-let lives;
-let gameOverFlag;
-let gameWonFlag;
+let enemies: Array<BasicEnemy | FastEnemy | TankEnemy>;
+let towers: Tower[];
+let projectiles: any[]; // Replace 'any' with actual Projectile type if available
+let lives: number;
+let gameOverFlag: boolean;
+let gameWonFlag: boolean;
 
-let currentWaveIndex;
-let waveInProgress;
-let waveDelayTimer;
-let currentWaveSpawnGroups;
+let currentWaveIndex: number;
+let waveInProgress: boolean;
+let waveDelayTimer: number;
+let currentWaveSpawnGroups: SpawnGroup[];
 
-let lastFrameTime;
+let lastFrameTime: number;
+
+// Define the type for spawn groups
+type EnemyClass = typeof BasicEnemy | typeof FastEnemy | typeof TankEnemy;
+interface SpawnGroup {
+    class: EnemyClass;
+    remainingCount: number;
+    spawnInterval: number;
+    spawnTimer: number;
+    active: boolean;
+}
 
 // Initialize game state
-function initializeGame() {
+function initializeGame(): void {
     selectedMapIndex = Math.floor(Math.random() * MAPS.length);
     rawPath = MAPS[selectedMapIndex];
     path = scalePath(rawPath);
@@ -89,19 +99,14 @@ initializeGame();
 
 // ------------------- Helper Functions -------------------
 
-/**
- * Scales a path defined with relative coordinates to actual canvas size.
- * @param {Array} relativePath - Array of points with x and y as percentages.
- * @returns {Array} scaledPath - Array of points with x and y in pixels.
- */
-function scalePath(relativePath) {
+function scalePath(relativePath: Array<{ x: number; y: number }>): Array<{ x: number; y: number }> {
     return relativePath.map((point) => ({
         x: (point.x / 100) * canvas.width,
         y: (point.y / 100) * canvas.height,
     }));
 }
 
-function generateRandomSpawnOffset(path, enemySize) {
+function generateRandomSpawnOffset(path: Array<{ x: number; y: number }>, enemySize: number): { x: number; y: number } {
     const dx = path[1].x - path[0].x;
     const dy = path[1].y - path[0].y;
     const distance = Math.hypot(dx, dy);
@@ -123,7 +128,7 @@ function generateRandomSpawnOffset(path, enemySize) {
     };
 }
 
-function pointToSegmentDistance(px, py, x1, y1, x2, y2) {
+function pointToSegmentDistance(px: number, py: number, x1: number, y1: number, x2: number, y2: number): number {
     const lineLengthSquared = (x2 - x1) ** 2 + (y2 - y1) ** 2;
     if (lineLengthSquared === 0) return Math.hypot(px - x1, py - y1);
 
@@ -136,10 +141,7 @@ function pointToSegmentDistance(px, py, x1, y1, x2, y2) {
 
 // ------------------- Game Functions -------------------
 
-/**
- * Initialize the next wave by setting up its spawn groups.
- */
-function startNextWave() {
+function startNextWave(): void {
     if (currentWaveIndex >= waves.length) {
         // All waves completed
         gameWonFlag = true;
@@ -164,11 +166,7 @@ function startNextWave() {
     // Removed wave message display
 }
 
-/**
- * Update the spawning logic based on active spawn groups.
- * @param {number} deltaTime - Time elapsed since last frame in ms
- */
-function spawnEnemies(deltaTime) {
+function spawnEnemies(deltaTime: number): void {
     if (!waveInProgress) {
         if (waveDelayTimer > 0) {
             waveDelayTimer -= deltaTime;
@@ -196,7 +194,7 @@ function spawnEnemies(deltaTime) {
             spawnGroup.spawnTimer -= deltaTime;
             if (spawnGroup.spawnTimer <= 0 && spawnGroup.remainingCount > 0) {
                 // Spawn an enemy
-                let enemySize;
+                let enemySize: number;
                 if (spawnGroup.class === BasicEnemy) {
                     enemySize = 20;
                 } else if (spawnGroup.class === FastEnemy) {
@@ -233,10 +231,7 @@ function spawnEnemies(deltaTime) {
     }
 }
 
-/**
- * Ends the current wave and prepares for the next one.
- */
-function endCurrentWave() {
+function endCurrentWave(): void {
     waveInProgress = false;
     waveDelayTimer = 2000; // Reset wave delay
     currentWaveIndex++;
@@ -244,11 +239,8 @@ function endCurrentWave() {
     console.log(`Wave ${currentWaveIndex} completed.`);
 }
 
-/**
- * Draw all paths on the canvas.
- */
-function drawPaths() {
-    const PATH_COLORS = ['gray', 'orange', 'purple', 'cyan'];
+function drawPaths(): void {
+    const PATH_COLORS: string[] = ['gray', 'orange', 'purple', 'cyan'];
 
     context.lineWidth = PATH_WIDTH;
     context.lineCap = 'round';
@@ -265,12 +257,9 @@ function drawPaths() {
     });
 }
 
-/**
- * The main game loop.
- */
-function gameLoop() {
-    const currentTime = Date.now();
-    const deltaTime = currentTime - lastFrameTime; // Time elapsed since last frame in ms
+function gameLoop(): void {
+    const currentTime: number = Date.now();
+    const deltaTime: number = currentTime - lastFrameTime; // Time elapsed since last frame in ms
     lastFrameTime = currentTime;
 
     if (!gameOverFlag) {
@@ -287,11 +276,7 @@ function gameLoop() {
     }
 }
 
-/**
- * Update game state based on elapsed time.
- * @param {number} deltaTime - Time elapsed since last frame in ms
- */
-function update(deltaTime) {
+function update(deltaTime: number): void {
     spawnEnemies(deltaTime);
 
     // Update enemies and remove defeated ones
@@ -328,10 +313,7 @@ function update(deltaTime) {
     }
 }
 
-/**
- * Render all game elements on the canvas.
- */
-function render() {
+function render(): void {
     context.clearRect(0, 0, canvas.width, canvas.height);
     drawPaths();
 
@@ -374,10 +356,7 @@ function render() {
     }
 }
 
-/**
- * Display the Game Over screen with a restart prompt.
- */
-function displayGameOver() {
+function displayGameOver(): void {
     context.fillStyle = 'rgba(0, 0, 0, 0.7)';
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.fillStyle = 'white';
@@ -400,10 +379,7 @@ function displayGameOver() {
     addRestartListener();
 }
 
-/**
- * Display the Victory screen with a restart prompt.
- */
-function displayVictory() {
+function displayVictory(): void {
     context.fillStyle = 'rgba(0, 0, 0, 0.7)';
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.fillStyle = 'white';
@@ -426,10 +402,7 @@ function displayVictory() {
     addRestartListener();
 }
 
-/**
- * Add event listeners for restarting the game.
- */
-function addRestartListener() {
+function addRestartListener(): void {
     // Define the handler
     const handleRestart = () => {
         // Remove this event listener after restart to prevent multiple triggers
@@ -445,10 +418,7 @@ function addRestartListener() {
     canvas.addEventListener('touchend', handleRestart);
 }
 
-/**
- * Reset the game to its initial state and start the first wave.
- */
-function resetGame() {
+function resetGame(): void {
     // Re-initialize game variables
     initializeGame();
 
@@ -467,30 +437,17 @@ function resetGame() {
     requestAnimationFrame(gameLoop);
 }
 
-/**
- * Check if the game is currently active.
- * @returns {boolean} - True if active, else false.
- */
-function isGameActive() {
+function isGameActive(): boolean {
     return !gameOverFlag && !gameWonFlag;
 }
 
 // ------------------- Game State Modification Functions -------------------
 
-/**
- * Add a tower at the specified coordinates.
- * @param {number} x - X-coordinate
- * @param {number} y - Y-coordinate
- */
-function addTower(x, y) {
+function addTower(x: number, y: number): void {
     towers.push(new Tower(x, y, context, enemies));
 }
 
-/**
- * Deduct gold by a specified amount.
- * @param {number} amount - Amount to deduct
- */
-function deductGold(amount) {
+function deductGold(amount: number): void {
     gold.value -= amount;
 }
 
@@ -513,13 +470,7 @@ requestAnimationFrame(gameLoop);
 
 // ------------------- Placement Validation Functions -------------------
 
-/**
- * Check if a position is on the path.
- * @param {number} x - X-coordinate
- * @param {number} y - Y-coordinate
- * @returns {boolean} - True if on path, else false
- */
-function isOnPath(x, y) {
+function isOnPath(x: number, y: number): boolean {
     const halfPathWidth = PATH_WIDTH / 2;
     const towerHalfSize = TOWER_SIZE / 2;
     for (let singlePath of MAPS) {
@@ -538,13 +489,7 @@ function isOnPath(x, y) {
     return false;
 }
 
-/**
- * Check if a position overlaps with an existing tower.
- * @param {number} x - X-coordinate
- * @param {number} y - Y-coordinate
- * @returns {boolean} - True if overlapping, else false
- */
-function isOnTower(x, y) {
+function isOnTower(x: number, y: number): boolean {
     for (let tower of towers) {
         const dx = x - tower.x;
         const dy = y - tower.y;
