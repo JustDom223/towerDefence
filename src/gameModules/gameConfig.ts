@@ -6,10 +6,10 @@ export const INITIAL_SCORE = 0;
 //Tower Config
 export const TOWER_SIZE = 100;
 export const TARGETINGMODES = {
-  MOST_HEALTH: 'most_health',
-  CLOSEST_TO_EXIT: 'closest_to_exit',
-  LAST_ENTERED: 'last_entered',
-  LEAST_HEALTH: 'least_health',
+    MOST_HEALTH: 'most_health',
+    CLOSEST_TO_EXIT: 'closest_to_exit',
+    LAST_ENTERED: 'last_entered',
+    LEAST_HEALTH: 'least_health',
 };
 
 //Map Config

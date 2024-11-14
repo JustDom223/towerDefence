@@ -1,9 +1,21 @@
-// waves.js
+// waves.ts
 
-import { BasicEnemy, FastEnemy, TankEnemy } from './enemies.js';
+import { BasicEnemy, FastEnemy, TankEnemy } from './enemies';
 // Import other enemy classes as needed
 
-export const waves = [
+interface SpawnGroup {
+    class: new (...args: any[]) => any;
+    count: number;
+    spawnInterval: number;
+    startDelay: number;
+}
+
+interface Wave {
+    number: number;
+    spawnGroups: SpawnGroup[];
+}
+
+export const waves: Wave[] = [
     // Wave 1
     {
         number: 1,

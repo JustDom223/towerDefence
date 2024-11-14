@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "allowJs": true,
+        "outDir": "dist",
+        "rootDir": "src",
+        "target": "ESNext", // Use ESNext for modern features and Vite compatibility
+        "module": "ESNext", // Vite expects ESNext for module compatibility
+        "strict": true, // Keep strict type-checking enabled
+        "esModuleInterop": true, // Maintain ES module compatibility
+        "lib": ["ES2017", "DOM"], // Libraries for modern JS and browser environments
+        "moduleResolution": "Node" // Ensures node-style module resolution
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "dist"]
+}

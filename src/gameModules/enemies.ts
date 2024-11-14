@@ -1,17 +1,36 @@
+export interface Position {
+    x: number;
+    y: number;
+}
+
 export class BasicEnemy {
-    /**
-     * Constructs a new BasicEnemy instance.
-     * @param {Array} path - An array of points defining the enemy's path.
-     * @param {Object} spawnOffset - The perpendicular offset { x, y } from the path's center.
-     */
-    constructor(path, spawnOffset = { x: 0, y: 0 }) {
+    size: number;
+    width: number;
+    height: number;
+    health: number;
+    maxHealth: number;
+    speed: number;
+    position: Position;
+    waypointIndex: number;
+    path: Position[];
+    spawnOffsetMagnitude: number;
+    spawnOffsetDirection: number;
+    spawnOffset: Position;
+    isDefeated: boolean;
+    points: number;
+    value: number;
+
+    constructor(path: Position[], spawnOffset: Position = { x: 0, y: 0 }) {
         this.size = 50; // Size for BasicEnemy
         this.width = this.size;
         this.height = this.size;
         this.health = 100;
         this.maxHealth = 100;
         this.speed = 1;
-        this.position = { x: path[0].x + spawnOffset.x, y: path[0].y + spawnOffset.y };
+        this.position = {
+            x: path[0].x + spawnOffset.x,
+            y: path[0].y + spawnOffset.y,
+        };
         this.waypointIndex = 0;
         this.path = path;
         this.spawnOffsetMagnitude = Math.hypot(spawnOffset.x, spawnOffset.y); // Fixed magnitude
@@ -19,9 +38,10 @@ export class BasicEnemy {
         this.isDefeated = false; // Flag to indicate if the enemy should be removed
         this.points = 10; // Points awarded when the enemy is defeated
         this.value = 1; // Gold value awarded
+        this.spawnOffset = { x: 0, y: 0 }; // Initialize spawnOffset
     }
 
-    update() {
+    update(): void {
         // Check if the enemy has reached the end of the path
         if (this.isAtEnd()) {
             this.isDefeated = true; // Mark for removal if at the end
@@ -45,8 +65,14 @@ export class BasicEnemy {
 
         // Recalculate spawnOffset based on initial magnitude and current segment's perpendicular vector
         this.spawnOffset = {
-            x: this.spawnOffsetMagnitude * perpendicularX * this.spawnOffsetDirection,
-            y: this.spawnOffsetMagnitude * perpendicularY * this.spawnOffsetDirection
+            x:
+                this.spawnOffsetMagnitude *
+                perpendicularX *
+                this.spawnOffsetDirection,
+            y:
+                this.spawnOffsetMagnitude *
+                perpendicularY *
+                this.spawnOffsetDirection,
         };
 
         // Calculate target position with spawnOffset
@@ -75,16 +101,12 @@ export class BasicEnemy {
         }
     }
 
-    isAtEnd() {
+    isAtEnd(): boolean {
         // Returns true if the enemy has reached the last waypoint
         return this.waypointIndex >= this.path.length - 1;
     }
 
-    /**
-     * Renders the enemy and its health bar on the canvas.
-     * @param {CanvasRenderingContext2D} context - The canvas rendering context.
-     */
-    render(context) {
+    render(context: CanvasRenderingContext2D): void {
         // Draw enemy body
         context.fillStyle = 'red';
         context.fillRect(
@@ -108,11 +130,7 @@ export class BasicEnemy {
         this.renderHealthBar(context);
     }
 
-    /**
-     * Renders the enemy's health bar above it.
-     * @param {CanvasRenderingContext2D} context - The canvas rendering context.
-     */
-    renderHealthBar(context) {
+    renderHealthBar(context: CanvasRenderingContext2D): void {
         // Calculate health bar dimensions
         const barWidth = this.width;
         const barHeight = 5;
@@ -125,12 +143,17 @@ export class BasicEnemy {
 
         // Draw current health level
         context.fillStyle = 'green';
-        context.fillRect(barX, barY, barWidth * (this.health / this.maxHealth), barHeight);
+        context.fillRect(
+            barX,
+            barY,
+            barWidth * (this.health / this.maxHealth),
+            barHeight,
+        );
     }
 }
 
 export class FastEnemy extends BasicEnemy {
-    constructor(path, spawnOffset = { x: 0, y: 0 }) {
+    constructor(path: Position[], spawnOffset: Position = { x: 0, y: 0 }) {
         super(path, spawnOffset); // Call the base class constructor
         this.size = 25; // Size for FastEnemy
         this.width = this.size;
@@ -139,10 +162,10 @@ export class FastEnemy extends BasicEnemy {
         this.health = 75; // Adjust health if needed
         this.maxHealth = 75;
         this.points = 15; // Adjust points awarded
-        this.value = .5; // Adjust gold value
+        this.value = 0.5; // Adjust gold value
     }
 
-    render(context) {
+    render(context: CanvasRenderingContext2D): void {
         // Draw enemy body with a different color to distinguish it
         context.fillStyle = 'orange';
         context.fillRect(
@@ -168,7 +191,7 @@ export class FastEnemy extends BasicEnemy {
 }
 
 export class TankEnemy extends BasicEnemy {
-    constructor(path, spawnOffset = { x: 0, y: 0 }) {
+    constructor(path: Position[], spawnOffset: Position = { x: 0, y: 0 }) {
         super(path, spawnOffset); // Call the base class constructor
         this.size = 75; // Size for TankEnemy
         this.width = this.size;
@@ -180,7 +203,7 @@ export class TankEnemy extends BasicEnemy {
         this.value = 2; // Adjust gold value
     }
 
-    render(context) {
+    render(context: CanvasRenderingContext2D): void {
         // Draw enemy body with a different color to distinguish it
         context.fillStyle = 'purple';
         context.fillRect(
